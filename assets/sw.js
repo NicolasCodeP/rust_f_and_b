@@ -15,11 +15,17 @@ self.addEventListener('install', function (e) {
   );
 });
 
-/* Serve cached content when offline */
+/* Serve cached content when offline, but skip if #dev is in the URL */
 self.addEventListener('fetch', function (e) {
-  e.respondWith(
-    caches.match(e.request).then(function (response) {
-      return response || fetch(e.request);
-    })
-  );
+  // Check if the request URL contains '#dev'
+  if (e.request.url.includes('#dev')) {
+    // Always fetch from network, skip cache
+    e.respondWith(fetch(e.request));
+  } else {
+    e.respondWith(
+      caches.match(e.request).then(function (response) {
+        return response || fetch(e.request);
+      })
+    );
+  }
 });
