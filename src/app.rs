@@ -75,9 +75,14 @@ impl eframe::App for TemplateApp {
             });
 
             ui.add(egui::Slider::new(&mut self.value, 0.0..=10.0).text("value"));
-            if ui.button("Increment").clicked() {
-                self.value += 1.0;
-            }
+            ui.horizontal(|ui| {
+                if ui.button("Decrement").clicked() {
+                    self.value -= 1.0;
+                }
+                if ui.button("Increment").clicked() {
+                    self.value += 1.0;
+                }
+            });
 
             ui.separator();
 
