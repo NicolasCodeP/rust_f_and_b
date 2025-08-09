@@ -13,7 +13,7 @@ impl Default for TemplateApp {
     fn default() -> Self {
         Self {
             // Example stuff:
-            label: "Hello World!".to_owned(),
+            label: "Hello World from Rust!!".to_owned(),
             value: 2.7,
         }
     }
@@ -46,6 +46,14 @@ impl eframe::App for TemplateApp {
         // Put your widgets into a `SidePanel`, `TopBottomPanel`, `CentralPanel`, `Window` or `Area`.
         // For inspiration and more examples, go to https://emilk.github.io/egui
 
+        egui::Window::new("My Window in Rust").show(ctx, |ui| {
+            ui.label("Hello World from Rust");
+            ui.add(egui::github_link_file!(
+                "https://github.com/emilk/eframe_template/blob/main/",
+                "Source code."
+            ));
+        });
+
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             // The top panel is often a good place for a menu bar:
 
@@ -63,6 +71,11 @@ impl eframe::App for TemplateApp {
 
                 egui::widgets::global_theme_preference_buttons(ui);
             });
+        });
+
+        // The side panel
+        egui::SidePanel::left("my_left_panel").show(ctx, |ui| {
+            ui.label("Hello World!");
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
