@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Service Worker Cache</title>
+</head>
+<body>
+    <h1>Service Worker Cache Cleaner</h1>
+    <button onclick="clearServiceWorker()">Clear Service Worker & Cache</button>
+    <div id="status"></div>
+
+    <script>
+        async function clearServiceWorker() {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                // Unregister all service workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                        statusDiv.innerHTML += '<p>✅ Unregistered service worker</p>';
+                    }
+                }
+
+                // Clear all caches
+                const cacheNames = await caches.keys();
+                for (const cacheName of cacheNames) {
+                    await caches.delete(cacheName);
+                    statusDiv.innerHTML += `<p>✅ Deleted cache: ${cacheName}</p>`;
+                }
+
+                statusDiv.innerHTML += '<p><strong>🎉 All service workers and caches cleared!</strong></p>';
+                statusDiv.innerHTML += '<p>You can now close this tab and refresh your main app.</p>';
+            } catch (error) {
+                statusDiv.innerHTML += `<p>❌ Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
