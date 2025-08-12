@@ -1,0 +1,3 @@
+[submodule "poc_fnb"]
+	path = poc_fnb
+	url = ./poc_fnb

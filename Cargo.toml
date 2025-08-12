@@ -25,8 +25,8 @@ log = "0.4.27"
 # You only need serde if you want app persistence:
 serde = { version = "1.0.219", features = ["derive"] }
 
-# Add poc_fnb library
-poc_fnb = { path = "../poc_fnb" }
+# Add poc_fnb library (local copy)
+poc_fnb = { path = "./poc_fnb" }
 
 # native:
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
