@@ -1,51 +1,54 @@
-name: Github Pages
+name: Github Pages - WASM Build & Deploy
 
-# By default, runs if you push to main. keeps your deployed app in sync with main branch.
+# Build and deploy WASM to GitHub Pages
 on:
   push:
     branches:
       - main
-# to only run when you do a new github release, comment out above part and uncomment the below trigger.
-# on:
-#   release:
-#     types:
-#       - published
+  # Uncomment below to deploy on new releases instead of every push to main
+  # release:
+  #   types:
+  #     - published
 
 permissions:
   contents: write # for committing to gh-pages branch.
 
 jobs:
-  build-github-pages:
+  # Single job to build and deploy WASM to GitHub Pages
+  build-and-deploy-wasm:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # repo checkout
+      # Step 1: Checkout code including submodules
+      - uses: actions/checkout@v4
         with:
           submodules: true
-          token: ${{ secrets.PAT_TOKEN }}
-      - name: Setup toolchain for wasm
+          token: ${{ secrets.PAT_TOKEN }} # Required for private submodules
+      # Step 2: Setup Rust toolchain for WebAssembly
+      - name: Setup toolchain for WASM
         run: |
           rustup update stable
           rustup default stable
           rustup set profile minimal
           rustup target add wasm32-unknown-unknown
-      - name: Rust Cache # cache the rust build artefacts
+
+      # Step 3: Cache Rust build artifacts for faster builds
+      - name: Setup Rust cache
         uses: Swatinem/rust-cache@v2
-      - name: Download and install Trunk binary
+
+      # Step 4: Install Trunk for WASM bundling
+      - name: Install Trunk
         run: wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
-      - name: Build # build
-        # Environment $public_url resolves to the github project page.
-        # If using a user/organization page, remove the `${{ github.event.repository.name }}` part.
-        # using --public-url something will allow trunk to modify all the href paths like from favicon.ico to repo_name/favicon.ico .
-        # this is necessary for github pages where the site is deployed to username.github.io/repo_name and all files must be requested
-        # relatively as eframe_template/favicon.ico. if we skip public-url option, the href paths will instead request username.github.io/favicon.ico which
-        # will obviously return error 404 not found.
+      # Step 5: Build the WASM application
+      - name: Build WASM application
+        # The public_url variable ensures all assets have the correct paths
+        # for GitHub Pages hosting at username.github.io/repo_name/
         run: ./trunk build --release --public-url $public_url
         env:
           public_url: "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
-      - name: Deploy
+
+      # Step 6: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist
-          # this option will not maintain any history of your previous pages deployment
-          # set to false if you want all page build to be committed to your gh-pages branch history
-          single-commit: true
+          folder: dist # Output folder with the built WASM application
+          single-commit: true # Don't keep history of previous deployments
