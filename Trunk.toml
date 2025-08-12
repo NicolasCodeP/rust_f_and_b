@@ -1,2 +1,11 @@
 [build]
+# Disable file hashing for GitHub Pages compatibility
 filehash = false
+# Enable WASM optimization for smaller bundle size
+dist = "dist"
+
+[serve]
+# Configuration for local development
+address = "127.0.0.1"
+port = 8080
+open = false

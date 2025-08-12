@@ -46,11 +46,17 @@ fn main() {
             .dyn_into::<web_sys::HtmlCanvasElement>()
             .expect("the_canvas_id was not a HtmlCanvasElement");
 
+        // Log to console for debugging
+        web_sys::console::log_1(&"Starting eframe application...".into());
+
         let start_result = eframe::WebRunner::new()
             .start(
                 canvas,
                 web_options,
-                Box::new(|cc| Ok(Box::new(eframe_todo_list::TemplateApp::new(cc)))),
+                Box::new(|cc| {
+                    web_sys::console::log_1(&"Creating TemplateApp...".into());
+                    Ok(Box::new(eframe_todo_list::TemplateApp::new(cc)))
+                }),
             )
             .await;
 
@@ -58,11 +64,13 @@ fn main() {
         if let Some(loading_text) = document.get_element_by_id("loading_text") {
             match start_result {
                 Ok(_) => {
+                    web_sys::console::log_1(&"Application started successfully".into());
                     loading_text.remove();
                 }
                 Err(e) => {
+                    web_sys::console::log_1(&format!("Failed to start eframe: {e:?}").into());
                     loading_text.set_inner_html(
-                        "<p> The app has crashed. See the developer console for details. </p>",
+                        "<p>The app has crashed. Check the developer console for details.</p>",
                     );
                     panic!("Failed to start eframe: {e:?}");
                 }

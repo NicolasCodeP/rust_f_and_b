@@ -138,8 +138,29 @@
         // We disable caching during development so that we always view the latest version.
         if ('serviceWorker' in navigator && window.location.hash !== "#dev") {
             window.addEventListener('load', function () {
-                navigator.serviceWorker.register('sw.js');
+                navigator.serviceWorker.register('sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(function(error) {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
             });
+        }
+
+        // Add error handling for WASM loading
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+            const loadingText = document.getElementById('loading_text');
+            if (loadingText) {
+                loadingText.innerHTML = '<p style="color: #ff6666;">Failed to load application. Check console for details.</p>';
+            }
+        });
+
+        // Check if WebAssembly is supported
+        if (typeof WebAssembly !== 'object') {
+            document.getElementById('loading_text').innerHTML = 
+                '<p style="color: #ff6666;">WebAssembly is not supported in this browser.</p>';
         }
     </script>
 </body>

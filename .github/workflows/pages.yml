@@ -46,9 +46,14 @@ jobs:
         env:
           public_url: "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}"
 
-      # Step 6: Copy .nojekyll to dist folder
-      - name: Copy .nojekyll to dist
-        run: cp .nojekyll dist/
+      # Step 6: Copy configuration files to dist folder
+      - name: Copy configuration files to dist
+        run: |
+          cp .nojekyll dist/
+          cp .htaccess dist/ || true
+          cp _headers dist/ || true
+          echo "Files in dist folder:"
+          ls -la dist/
 
       # Step 7: Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
