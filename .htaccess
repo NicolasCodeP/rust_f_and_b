@@ -1,0 +1,4 @@
+AddType application/wasm .wasm
+<Files "*.wasm">
+    Header set Content-Type "application/wasm"
+</Files>
