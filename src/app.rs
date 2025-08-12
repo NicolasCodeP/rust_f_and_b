@@ -116,12 +116,12 @@ impl TemplateApp {
     fn initialize_sample_data(&mut self) {
         // Create suppliers
         let supplier1 = Supplier {
-            name: "FermesFraîches".to_string(),
+            name: "Fermes Fraîches".to_string(),
             contact: Some("contact@fermesfraîches.fr".to_string()),
         };
 
         let supplier2 = Supplier {
-            name: "LaiterieBest".to_string(),
+            name: "Laiterie Best".to_string(),
             contact: Some("info@laiteriebest.fr".to_string()),
         };
 
