@@ -1,0 +1,41 @@
+name: Build and Deploy to Render
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout code including submodules
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.PAT_TOKEN }}
+
+      # Step 2: Setup Rust toolchain for WebAssembly
+      - name: Setup toolchain for WASM
+        run: |
+          rustup update stable
+          rustup default stable
+          rustup set profile minimal
+          rustup target add wasm32-unknown-unknown
+
+      # Step 3: Cache Rust build artifacts
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      # Step 4: Install Trunk
+      - name: Install Trunk
+        run: wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+
+      # Step 5: Build WASM application
+      - name: Build WASM application
+        run: ./trunk build --release
+
+      # Step 6: Deploy to Render (via webhook)
+      - name: Trigger Render Deploy
+        run: |
+          curl -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

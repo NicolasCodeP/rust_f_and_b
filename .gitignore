@@ -1,8 +1,9 @@
 # Mac stuff:
 .DS_Store
 
-# trunk output folder
-dist
+# trunk output folder (for local development)
+# dist is needed for deployment, so we'll only ignore it locally
+dist/
 
 # Rust compile target directories:
 target
