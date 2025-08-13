@@ -1,0 +1,65 @@
+name: Build and Deploy Mobile WIP to Netlify
+
+on:
+  push:
+    branches:
+      - mobile-optimizations-wip
+  pull_request:
+    branches:
+      - mobile-optimizations-wip
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout code including submodules
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.PAT_TOKEN }}
+
+      # Step 2: Setup Rust toolchain for WebAssembly
+      - name: Setup toolchain for WASM
+        run: |
+          rustup update stable
+          rustup default stable
+          rustup set profile minimal
+          rustup target add wasm32-unknown-unknown
+
+      # Step 3: Cache Rust build artifacts
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: mobile-wip-${{ hashFiles('**/Cargo.lock') }}
+
+      # Step 4: Install Trunk
+      - name: Install Trunk
+        run: wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+
+      # Step 5: Build WASM application
+      - name: Build WASM application
+        run: ./trunk build --release
+
+      # Step 6: Install Netlify CLI
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
+      # Step 7: Deploy to Netlify (Mobile WIP site)
+      - name: Deploy to Netlify Mobile WIP
+        run: netlify deploy --prod --dir=dist --message="Deploy Mobile WIP from branch mobile-optimizations-wip - ${{ github.sha }}"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_MOBILE_WIP_SITE_ID }}
+
+      # Step 8: Comment on PR with preview URL (if it's a PR)
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Mobile WIP deployment complete! Preview at: https://your-mobile-wip-site.netlify.app'
+            })
