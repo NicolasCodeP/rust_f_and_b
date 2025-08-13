@@ -1,8 +1,8 @@
 # Netlify configuration for WASM applications
 [build]
-  publish = "dist"
-  command = "echo 'Build handled by GitHub Actions - no build needed'"
-  ignore = "true"  # Skip Netlify's build process
+publish = "dist"
+command = "echo 'Build handled by GitHub Actions - no build needed'"
+ignore = "true"                                                      # Skip Netlify's build process
 
 [[headers]]
 for = "*.wasm"
