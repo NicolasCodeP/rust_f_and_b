@@ -1,0 +1,50 @@
+name: Build and Deploy Mobile WIP to Netlify
+
+on:
+  push:
+    branches:
+      - mobile-optimizations-wip
+  pull_request:
+    branches:
+      - mobile-optimizations-wip
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Checkout code including submodules
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          token: ${{ secrets.PAT_TOKEN }}
+
+      # Step 2: Setup Rust toolchain for WebAssembly
+      - name: Setup toolchain for WASM
+        run: |
+          rustup update stable
+          rustup default stable
+          rustup set profile minimal
+          rustup target add wasm32-unknown-unknown
+
+      # Step 3: Cache Rust build artifacts
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@v2
+
+      # Step 4: Install Trunk
+      - name: Install Trunk
+        run: wget -qO- https://github.com/thedodd/trunk/releases/latest/download/trunk-x86_64-unknown-linux-gnu.tar.gz | tar -xzf-
+
+      # Step 5: Build WASM application
+      - name: Build WASM application
+        run: ./trunk build --release
+
+      # Step 6: Install Netlify CLI
+      - name: Install Netlify CLI
+        run: npm install -g netlify-cli
+
+      # Step 7: Deploy to Netlify (Mobile WIP Site)
+      - name: Deploy to Netlify Mobile WIP
+        run: netlify deploy --prod --dir=dist --message="Deploy Mobile WIP from GitHub Actions"
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_MOBILE_WIP_SITE_ID }}
