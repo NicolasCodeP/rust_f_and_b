@@ -2,6 +2,12 @@ use poc_fnb::{Ingredient, IngredientType, Plate, PlateComponent, QuantityUnit, S
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[derive(serde::Deserialize, serde::Serialize, PartialEq)]
+enum MobileTab {
+    Ingredients,
+    Recipes,
+}
+
 /// We derive Deserialize/Serialize so we can persist app state on shutdown.
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(default)] // if we add new fields, give them default values when deserializing old state
@@ -62,6 +68,10 @@ pub struct TemplateApp {
 
     #[serde(skip)]
     show_add_recipe_form: bool,
+
+    // Mobile UI state
+    #[serde(skip)]
+    mobile_tab: MobileTab,
 }
 
 impl Default for TemplateApp {
@@ -86,6 +96,7 @@ impl Default for TemplateApp {
             new_recipe_batch_unit: QuantityUnit::Unit,
             editing_recipe_idx: None,
             show_add_recipe_form: false,
+            mobile_tab: MobileTab::Ingredients,
         };
 
         // Initialize with sample data
@@ -99,6 +110,15 @@ impl TemplateApp {
     pub fn new(cc: &eframe::CreationContext<'_>) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
+
+        // Configure for mobile-friendly UI (simplified for debugging)
+        let mut style = (*cc.egui_ctx.style()).clone();
+
+        // Basic touch-friendly improvements only
+        style.spacing.button_padding = egui::Vec2::new(12.0, 8.0);
+        style.spacing.item_spacing = egui::Vec2::new(8.0, 6.0);
+
+        cc.egui_ctx.set_style(style);
 
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
@@ -709,6 +729,10 @@ impl eframe::App for TemplateApp {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Check if we're on a small screen (mobile-like) - temporarily disabled
+        let screen_rect = ctx.screen_rect();
+        let is_mobile = false; // screen_rect.width() < 768.0; // Disabled for debugging
+
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {
                 let is_web = cfg!(target_arch = "wasm32");
@@ -724,24 +748,56 @@ impl eframe::App for TemplateApp {
             });
         });
 
-        egui::SidePanel::left("ingredients_panel")
-            .min_width(400.0)
-            .show(ctx, |ui| {
-                self.ingredients_panel(ui);
-            });
-
-        egui::CentralPanel::default().show(ctx, |ui| {
-            self.plates_panel(ui);
-
-            ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+        if is_mobile {
+            // Mobile layout: Use tabs instead of side panels
+            egui::CentralPanel::default().show(ctx, |ui| {
                 ui.horizontal(|ui| {
-                    ui.spacing_mut().item_spacing.x = 0.0;
-                    ui.label("Gestion des Coûts F&B propulsé par ");
-                    ui.hyperlink_to("egui", "https://github.com/emilk/egui");
-                    ui.label(".");
+                    ui.selectable_value(
+                        &mut self.mobile_tab,
+                        MobileTab::Ingredients,
+                        "📋 Ingrédients",
+                    );
+                    ui.selectable_value(&mut self.mobile_tab, MobileTab::Recipes, "🍽️ Recettes");
                 });
-                egui::warn_if_debug_build(ui);
+
+                ui.separator();
+
+                match self.mobile_tab {
+                    MobileTab::Ingredients => self.ingredients_panel(ui),
+                    MobileTab::Recipes => self.plates_panel(ui),
+                }
+
+                ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 0.0;
+                        ui.label("Gestion des Coûts F&B propulsé par ");
+                        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+                        ui.label(".");
+                    });
+                    egui::warn_if_debug_build(ui);
+                });
             });
-        });
+        } else {
+            // Desktop layout: Side panel + central panel
+            egui::SidePanel::left("ingredients_panel")
+                .min_width(400.0)
+                .show(ctx, |ui| {
+                    self.ingredients_panel(ui);
+                });
+
+            egui::CentralPanel::default().show(ctx, |ui| {
+                self.plates_panel(ui);
+
+                ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 0.0;
+                        ui.label("Gestion des Coûts F&B propulsé par ");
+                        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+                        ui.label(".");
+                    });
+                    egui::warn_if_debug_build(ui);
+                });
+            });
+        }
     }
 }

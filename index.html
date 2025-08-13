@@ -2,7 +2,7 @@
 <html>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 
-<!-- Disable zooming: -->
+<!-- Mobile-optimized viewport: -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 
 <head>
@@ -71,6 +71,21 @@
             left: 0;
             width: 100%;
             height: 100%;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            .centered {
+                font-size: 18px;
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .centered {
+                font-size: 16px;
+                padding: 15px;
+            }
         }
 
         .centered {
@@ -161,6 +176,55 @@
         if (typeof WebAssembly !== 'object') {
             document.getElementById('loading_text').innerHTML = 
                 '<p style="color: #ff6666;">WebAssembly is not supported in this browser.</p>';
+        }
+
+        // Mobile-specific optimizations (temporarily disabled for debugging)
+        function setupMobileOptimizations() {
+            console.log('Mobile optimizations loaded but disabled for debugging');
+            // Commented out for now to debug the spinning widget issue
+            /*
+            // Prevent iOS Safari from zooming on input focus
+            const meta = document.querySelector('meta[name="viewport"]');
+            if (meta && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+            }
+
+            // Prevent double-tap zoom
+            let lastTouchEnd = 0;
+            document.addEventListener('touchend', function(event) {
+                const now = (new Date()).getTime();
+                if (now - lastTouchEnd <= 300) {
+                    event.preventDefault();
+                }
+                lastTouchEnd = now;
+            }, false);
+
+            // Disable pull-to-refresh on mobile browsers
+            document.body.addEventListener('touchstart', function(e) {
+                if (e.touches.length !== 1) return;
+                
+                const scrollY = window.pageYOffset || document.body.scrollTop || document.documentElement.scrollTop;
+                if (scrollY === 0) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            document.body.addEventListener('touchmove', function(e) {
+                if (e.touches.length !== 1) return;
+                
+                const scrollY = window.pageYOffset || document.body.scrollTop || document.documentElement.scrollTop;
+                if (scrollY === 0) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+            */
+        }
+
+        // Run mobile optimizations after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupMobileOptimizations);
+        } else {
+            setupMobileOptimizations();
         }
     </script>
 </body>
