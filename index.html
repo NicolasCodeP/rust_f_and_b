@@ -79,12 +79,30 @@
                 font-size: 18px;
                 padding: 20px;
             }
+            
+            /* Handle virtual keyboard */
+            body.keyboard-open {
+                height: 50vh;
+            }
+            
+            body.keyboard-open canvas {
+                height: 50vh;
+            }
         }
 
         @media (max-width: 480px) {
             .centered {
                 font-size: 16px;
                 padding: 15px;
+            }
+            
+            /* More aggressive keyboard handling for small screens */
+            body.keyboard-open {
+                height: 40vh;
+            }
+            
+            body.keyboard-open canvas {
+                height: 40vh;
             }
         }
 
@@ -178,46 +196,80 @@
                 '<p style="color: #ff6666;">WebAssembly is not supported in this browser.</p>';
         }
 
-        // Mobile-specific optimizations (temporarily disabled for debugging)
+        // Mobile-specific optimizations (updated for keyboard support)
         function setupMobileOptimizations() {
-            console.log('Mobile optimizations loaded but disabled for debugging');
-            // Commented out for now to debug the spinning widget issue
-            /*
-            // Prevent iOS Safari from zooming on input focus
-            const meta = document.querySelector('meta[name="viewport"]');
-            if (meta && /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+            console.log('Setting up mobile optimizations with keyboard support');
+            
+            // Create invisible input for mobile keyboard activation
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'text';
+            hiddenInput.style.position = 'absolute';
+            hiddenInput.style.left = '-9999px';
+            hiddenInput.style.top = '-9999px';
+            hiddenInput.style.opacity = '0';
+            hiddenInput.style.pointerEvents = 'none';
+            hiddenInput.setAttribute('autocomplete', 'off');
+            hiddenInput.setAttribute('autocorrect', 'off');
+            hiddenInput.setAttribute('autocapitalize', 'none');
+            hiddenInput.setAttribute('spellcheck', 'false');
+            document.body.appendChild(hiddenInput);
+            
+            // Listen for egui input requests
+            window.addEventListener('message', function(event) {
+                if (event.data === 'egui_mobile_input') {
+                    // Focus the hidden input to trigger mobile keyboard
+                    hiddenInput.focus();
+                    console.log('Mobile keyboard activation requested');
+                } else if (event.data && event.data.type === 'egui_request_keyboard') {
+                    // Alternative message format
+                    hiddenInput.focus();
+                    console.log('Mobile keyboard activation requested (alt format)');
+                }
+            });
+            
+            // Monitor for text input events and forward them
+            hiddenInput.addEventListener('input', function(event) {
+                // Send input back to egui
+                const canvas = document.getElementById('the_canvas_id');
+                if (canvas) {
+                    const inputEvent = new CustomEvent('egui_text_input', {
+                        detail: { text: event.target.value }
+                    });
+                    canvas.dispatchEvent(inputEvent);
+                }
+            });
+            
+            // Handle virtual keyboard visibility
+            let initialViewportHeight = window.innerHeight;
+            
+            window.addEventListener('resize', function() {
+                const currentHeight = window.innerHeight;
+                const keyboardHeight = initialViewportHeight - currentHeight;
+                
+                if (keyboardHeight > 150) {
+                    // Keyboard is probably open
+                    document.body.classList.add('keyboard-open');
+                } else {
+                    document.body.classList.remove('keyboard-open');
+                }
+            });
+            
+            // iOS Safari specific fixes for keyboard
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                // Prevent viewport zoom when focusing input
+                const meta = document.querySelector('meta[name="viewport"]');
+                if (meta) {
+                    meta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover';
+                }
+                
+                // Handle iOS keyboard events
+                window.addEventListener('focusin', function() {
+                    setTimeout(function() {
+                        document.body.scrollTop = 0;
+                        document.documentElement.scrollTop = 0;
+                    }, 100);
+                });
             }
-
-            // Prevent double-tap zoom
-            let lastTouchEnd = 0;
-            document.addEventListener('touchend', function(event) {
-                const now = (new Date()).getTime();
-                if (now - lastTouchEnd <= 300) {
-                    event.preventDefault();
-                }
-                lastTouchEnd = now;
-            }, false);
-
-            // Disable pull-to-refresh on mobile browsers
-            document.body.addEventListener('touchstart', function(e) {
-                if (e.touches.length !== 1) return;
-                
-                const scrollY = window.pageYOffset || document.body.scrollTop || document.documentElement.scrollTop;
-                if (scrollY === 0) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-
-            document.body.addEventListener('touchmove', function(e) {
-                if (e.touches.length !== 1) return;
-                
-                const scrollY = window.pageYOffset || document.body.scrollTop || document.documentElement.scrollTop;
-                if (scrollY === 0) {
-                    e.preventDefault();
-                }
-            }, { passive: false });
-            */
         }
 
         // Run mobile optimizations after DOM is ready

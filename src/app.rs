@@ -2,6 +2,12 @@ use poc_fnb::{Ingredient, IngredientType, Plate, PlateComponent, QuantityUnit, S
 use std::cell::RefCell;
 use std::rc::Rc;
 
+#[cfg(target_arch = "wasm32")]
+use wasm_bindgen::prelude::*;
+
+#[cfg(target_arch = "wasm32")]
+use web_sys;
+
 #[derive(serde::Deserialize, serde::Serialize, PartialEq)]
 enum MobileTab {
     Ingredients,
@@ -265,7 +271,19 @@ impl TemplateApp {
         ui.collapsing("Ajouter un Nouvel Ingrédient", |ui| {
             ui.horizontal(|ui| {
                 ui.label("Nom :");
-                ui.text_edit_singleline(&mut self.new_ingredient_name);
+                let text_edit = ui.text_edit_singleline(&mut self.new_ingredient_name);
+
+                // Mobile keyboard fix: trigger keyboard when text field is focused
+                #[cfg(target_arch = "wasm32")]
+                if text_edit.gained_focus() {
+                    if let Some(window) = web_sys::window() {
+                        let _ = window.post_message(
+                            &wasm_bindgen::JsValue::from_str("egui_mobile_input"),
+                            "*",
+                        );
+                    }
+                }
+                let _ = text_edit; // Suppress unused variable warning
             });
 
             ui.horizontal(|ui| {
@@ -497,7 +515,19 @@ impl TemplateApp {
 
                 ui.horizontal(|ui| {
                     ui.label("Nom :");
-                    ui.text_edit_singleline(&mut self.new_recipe_name);
+                    let text_edit = ui.text_edit_singleline(&mut self.new_recipe_name);
+
+                    // Mobile keyboard fix for recipe name
+                    #[cfg(target_arch = "wasm32")]
+                    if text_edit.gained_focus() {
+                        if let Some(window) = web_sys::window() {
+                            let _ = window.post_message(
+                                &wasm_bindgen::JsValue::from_str("egui_mobile_input"),
+                                "*",
+                            );
+                        }
+                    }
+                    let _ = text_edit; // Suppress unused variable warning
                 });
 
                 ui.horizontal(|ui| {
@@ -731,7 +761,21 @@ impl eframe::App for TemplateApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         // Check if we're on a small screen (mobile-like) - temporarily disabled
         let screen_rect = ctx.screen_rect();
-        let is_mobile = false; // screen_rect.width() < 768.0; // Disabled for debugging
+        let is_mobile = screen_rect.width() < 768.0; // Re-enabled for mobile keyboard support
+
+        // Enable mobile-specific input handling
+        #[cfg(target_arch = "wasm32")]
+        if is_mobile {
+            // Simple approach: trigger mobile keyboard on any text widget interaction
+            if ctx.input(|i| i.pointer.any_click()) {
+                // Send message to JavaScript to show mobile keyboard
+                #[cfg(target_arch = "wasm32")]
+                if let Some(window) = web_sys::window() {
+                    let _ = window
+                        .post_message(&wasm_bindgen::JsValue::from_str("egui_mobile_input"), "*");
+                }
+            }
+        }
 
         egui::TopBottomPanel::top("top_panel").show(ctx, |ui| {
             egui::MenuBar::new().ui(ui, |ui| {

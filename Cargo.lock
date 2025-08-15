@@ -865,6 +865,7 @@ dependencies = [
  "log",
  "poc_fnb",
  "serde",
+ "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
 ]
