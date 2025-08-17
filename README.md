@@ -54,6 +54,24 @@ Le projet utilise une architecture modulaire :
 - `poc_fnb/` - Bibliothèque métier pour la gestion F&B
 - `src/app.rs` - Interface utilisateur principale
 - `src/main.rs` - Point d'entrée de l'application
+- `src/android_keyboard.rs` - Support clavier virtuel Android
+
+## 📱 Support Android
+
+L'application inclut un support spécialisé pour le clavier virtuel Android :
+
+- **Affichage automatique** du clavier lors du focus sur les champs de texte
+- **Masquage automatique** du clavier lorsque les champs perdent le focus
+- **Gestion des exceptions JNI** pour une expérience stable
+- **Compatibilité NativeActivity** pour les applications Android natives
+
+### Configuration Android
+
+Pour utiliser le support clavier Android, assurez-vous que :
+
+1. Les dépendances JNI sont configurées (`jni`, `ndk-sys`, `ndk`)
+2. L'application est compilée avec la cible `aarch64-linux-android` ou similaire
+3. Le contexte Android est correctement initialisé au démarrage
 
 ## 📝 License
 

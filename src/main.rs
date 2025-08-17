@@ -17,6 +17,7 @@ fn main() -> eframe::Result {
             ),
         ..Default::default()
     };
+
     eframe::run_native(
         "Gestion des Coûts F&B",
         native_options,

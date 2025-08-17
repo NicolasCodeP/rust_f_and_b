@@ -78,6 +78,10 @@ pub struct TemplateApp {
     // Mobile UI state
     #[serde(skip)]
     mobile_tab: MobileTab,
+
+    // Android keyboard state tracking
+    #[serde(skip)]
+    android_keyboard_shown: bool,
 }
 
 impl Default for TemplateApp {
@@ -103,6 +107,7 @@ impl Default for TemplateApp {
             editing_recipe_idx: None,
             show_add_recipe_form: false,
             mobile_tab: MobileTab::Ingredients,
+            android_keyboard_shown: false,
         };
 
         // Initialize with sample data
@@ -125,6 +130,10 @@ impl TemplateApp {
         style.spacing.item_spacing = egui::Vec2::new(8.0, 6.0);
 
         cc.egui_ctx.set_style(style);
+
+        // Try to initialize Android keyboard support
+        #[cfg(target_os = "android")]
+        crate::android_keyboard::try_init_from_eframe();
 
         // Load previous app state (if any).
         // Note that you must enable the `persistence` feature for this to work.
@@ -266,6 +275,48 @@ impl TemplateApp {
 
     fn ingredients_panel(&mut self, ui: &mut egui::Ui) {
         ui.heading("Ingrédients");
+
+        // Android keyboard test controls (only show in debug builds on Android)
+        #[cfg(all(target_os = "android", debug_assertions))]
+        ui.collapsing("🔧 Test Clavier Android", |ui| {
+            ui.horizontal(|ui| {
+                if ui.button("📱 Afficher Clavier").clicked() {
+                    if let Err(e) = crate::android_keyboard::show_soft_input(true) {
+                        log::error!("Erreur affichage clavier: {}", e);
+                    } else {
+                        log::info!("Commande d'affichage clavier envoyée");
+                        self.android_keyboard_shown = true;
+                    }
+                }
+                if ui.button("🚫 Masquer Clavier").clicked() {
+                    if let Err(e) = crate::android_keyboard::hide_soft_input() {
+                        log::error!("Erreur masquage clavier: {}", e);
+                    } else {
+                        log::info!("Commande de masquage clavier envoyée");
+                        self.android_keyboard_shown = false;
+                    }
+                }
+            });
+
+            ui.horizontal(|ui| {
+                ui.label("État clavier:");
+                if self.android_keyboard_shown {
+                    ui.colored_label(egui::Color32::GREEN, "📱 Affiché");
+                } else {
+                    ui.colored_label(egui::Color32::RED, "🚫 Masqué");
+                }
+            });
+
+            let focus_state = crate::android_keyboard::check_ui_keyboard_focus(&ui.ctx());
+            ui.horizontal(|ui| {
+                ui.label("Focus UI:");
+                if focus_state {
+                    ui.colored_label(egui::Color32::BLUE, "🎯 Actif");
+                } else {
+                    ui.colored_label(egui::Color32::GRAY, "⚫ Inactif");
+                }
+            });
+        });
 
         // Add new ingredient form
         ui.collapsing("Ajouter un Nouvel Ingrédient", |ui| {
@@ -759,6 +810,32 @@ impl eframe::App for TemplateApp {
 
     /// Called each time the UI needs repainting, which may be many times per second.
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Android keyboard handling
+        #[cfg(target_os = "android")]
+        {
+            // Check if any text field has focus and show/hide keyboard accordingly
+            let should_show_keyboard = crate::android_keyboard::check_ui_keyboard_focus(ctx);
+
+            // Only call JNI functions when the state actually changes
+            if should_show_keyboard != self.android_keyboard_shown {
+                if should_show_keyboard {
+                    if let Err(e) = crate::android_keyboard::show_soft_input(true) {
+                        log::warn!("Failed to show Android keyboard: {}", e);
+                    } else {
+                        self.android_keyboard_shown = true;
+                        log::debug!("Android keyboard shown due to focus change");
+                    }
+                } else {
+                    if let Err(e) = crate::android_keyboard::hide_soft_input() {
+                        log::warn!("Failed to hide Android keyboard: {}", e);
+                    } else {
+                        self.android_keyboard_shown = false;
+                        log::debug!("Android keyboard hidden due to focus loss");
+                    }
+                }
+            }
+        }
+
         // Check if we're on a small screen (mobile-like) - temporarily disabled
         let screen_rect = ctx.screen_rect();
         let is_mobile = screen_rect.width() < 768.0; // Re-enabled for mobile keyboard support
