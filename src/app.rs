@@ -891,8 +891,8 @@ impl eframe::App for TemplateApp {
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 0.0;
-                        ui.label("Gestion des Coûts F&B propulsé par ");
-                        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+                        ui.label("Gestion des Coûts F&B");
+                        // ui.hyperlink_to("egui", "https://github.com/emilk/egui");
                         ui.label(".");
                     });
                     egui::warn_if_debug_build(ui);
@@ -912,8 +912,8 @@ impl eframe::App for TemplateApp {
                 ui.with_layout(egui::Layout::bottom_up(egui::Align::LEFT), |ui| {
                     ui.horizontal(|ui| {
                         ui.spacing_mut().item_spacing.x = 0.0;
-                        ui.label("Gestion des Coûts F&B propulsé par ");
-                        ui.hyperlink_to("egui", "https://github.com/emilk/egui");
+                        ui.label("Gestion des Coûts F&B");
+                        // ui.hyperlink_to("egui", "https://github.com/emilk/egui");
                         ui.label(".");
                     });
                     egui::warn_if_debug_build(ui);
